@@ -1,23 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ronanii/dummy_data/dummy_data.dart';
-
+import 'new_widget.dart'; // Import the new widget
 import '../../../model/ride/locations.dart';
 import '../../../model/ride_pref/ride_pref.dart';
 
-///
-/// A Ride Preference From is a view to select:
-///   - A depcarture location
-///   - An arrival location
-///   - A date
-///   - A number of seats
-///
-/// The form can be created with an existing RidePref (optional).
-///
 class RidePrefForm extends StatefulWidget {
-  // The form can be created with an optional initial RidePref.
   final RidePref? initRidePref;
+  final Function(RidePref)? onSearch;
 
-  const RidePrefForm({super.key, this.initRidePref});
+  const RidePrefForm({super.key, this.initRidePref, this.onSearch});
 
   @override
   State<RidePrefForm> createState() => _RidePrefFormState();
@@ -25,32 +16,46 @@ class RidePrefForm extends StatefulWidget {
 
 class _RidePrefFormState extends State<RidePrefForm> {
   Location? departure;
-  late DateTime departureDate;
   Location? arrival;
-  late int requestedSeats;
+  DateTime departureDate = DateTime.now();
+  int requestedSeats = 1;
+  bool isLoading = false; // Loading state for button
 
   final TextEditingController departureController = TextEditingController();
   final TextEditingController arrivalController = TextEditingController();
   final TextEditingController dateController = TextEditingController();
-  final TextEditingController seatsController = TextEditingController(text: '1');
-  DateTime selectedDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initRidePref != null) {
+      departure = widget.initRidePref!.departure;
+      arrival = widget.initRidePref!.arrival;
+      departureDate = widget.initRidePref!.departureDate;
+      requestedSeats = widget.initRidePref!.requestedSeats;
+
+      departureController.text = departure?.name ?? '';
+      arrivalController.text = arrival?.name ?? '';
+      dateController.text = "${departureDate.toLocal()}".split(' ')[0];
+    }
+  }
 
   void _selectDate() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: selectedDate,
+      initialDate: departureDate,
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
     if (pickedDate != null) {
       setState(() {
-        selectedDate = pickedDate;
+        departureDate = pickedDate;
         dateController.text = "${pickedDate.toLocal()}".split(' ')[0];
       });
     }
   }
 
-  void _openLocationSearch(TextEditingController controller) async {
+  void _openLocationSearch(TextEditingController controller, bool isDeparture) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const LocationSearchScreen()),
@@ -58,95 +63,122 @@ class _RidePrefFormState extends State<RidePrefForm> {
     if (result != null) {
       setState(() {
         controller.text = result;
+        if (isDeparture) {
+          departure = Location(name: result, country: Country.france); // Default country for now
+        } else {
+          arrival = Location(name: result, country: Country.france);
+        }
       });
     }
   }
 
+  void _switchLocations() {
+    setState(() {
+      String tempText = departureController.text;
+      departureController.text = arrivalController.text;
+      arrivalController.text = tempText;
 
-  // ----------------------------------
-  // Initialize the Form attributes
-  // ----------------------------------
-
-  @override
-  void initState() {
-    super.initState();
-    // TODO
+      Location? tempLocation = departure;
+      departure = arrival;
+      arrival = tempLocation;
+    });
   }
 
-  // ----------------------------------
-  // Handle events
-  // ----------------------------------
+  bool get isSearchEnabled =>
+      departureController.text.isNotEmpty &&
+          arrivalController.text.isNotEmpty &&
+          departure != null &&
+          arrival != null &&
+          departureDate.isAfter(DateTime.now());
 
+  void _onSearch() {
+    if (isLoading || !isSearchEnabled) return; // Prevent duplicate calls
+    setState(() => isLoading = true);
 
-  // ----------------------------------
-  // Compute the widgets rendering
-  // ----------------------------------
+    widget.onSearch?.call(
+      RidePref(
+        departure: departure!,
+        arrival: arrival!,
+        departureDate: departureDate,
+        requestedSeats: requestedSeats,
+      ),
+    );
 
+    Future.delayed(const Duration(seconds: 2), () {
+      setState(() => isLoading = false);
+    });
+  }
 
-  // ----------------------------------
-  // Build the widgets
-  // ----------------------------------
   @override
   Widget build(BuildContext context) {
     return Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TextField(
-            controller: departureController,
-            readOnly: true,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.location_on),
-              hintText: "Leaving from",
-              border: OutlineInputBorder(),
-            ),
-            onTap: () => _openLocationSearch(departureController),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: arrivalController,
-            readOnly: true,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.location_on_outlined),
-              hintText: "Going to",
-              border: OutlineInputBorder(),
-            ),
-            onTap: () => _openLocationSearch(arrivalController),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: dateController,
-            readOnly: true,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.calendar_today),
-              hintText: "Today",
-              border: OutlineInputBorder(),
-            ),
-            onTap: _selectDate,
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: seatsController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.person),
-              hintText: "1",
-              border: OutlineInputBorder(),
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: departureController,
+          readOnly: true,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.location_on),
+            hintText: "Leaving from",
+            border: const OutlineInputBorder(),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.swap_vert),
+              onPressed: _switchLocations,
             ),
           ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-            ),
-            child: const Text(
-              "Search",
-              style: TextStyle(fontSize: 16, color: Colors.white),
-            ),
+          onTap: () => _openLocationSearch(departureController, true),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: arrivalController,
+          readOnly: true,
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.location_on_outlined),
+            hintText: "Going to",
+            border: OutlineInputBorder(),
           ),
-        ]);
+          onTap: () => _openLocationSearch(arrivalController, false),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: dateController,
+          readOnly: true,
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.calendar_today),
+            hintText: "Select Date",
+            border: OutlineInputBorder(),
+          ),
+          onTap: _selectDate,
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            const Icon(Icons.person, size: 36),
+            IconButton(
+              onPressed: requestedSeats > 1
+                  ? () => setState(() => requestedSeats--)
+                  : null,
+              icon: const Icon(Icons.remove_circle_outline, size: 30),
+            ),
+            Text(
+              '$requestedSeats',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            IconButton(
+              onPressed: () => setState(() => requestedSeats++),
+              icon: const Icon(Icons.add_circle_outline, size: 30),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        // CustomButton(
+        //   text: isLoading ? "Searching..." : "Search",
+        //   onPressed: isSearchEnabled && !isLoading ? _onSearch : null,
+        // ),
+      ],
+    );
   }
 }
 
@@ -171,7 +203,8 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
   void _filterLocations(String query) {
     setState(() {
       filteredLocations = allLocations
-          .where((location) => location.name.toLowerCase().contains(query.toLowerCase()))
+          .where((location) =>
+          location.name.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
   }
@@ -199,7 +232,9 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
                 itemCount: filteredLocations.length,
                 itemBuilder: (context, index) {
                   return ListTile(
-                    title: Text("${filteredLocations[index].name}, ${filteredLocations[index].country.name}"),
+                    title: Text(
+                      "${filteredLocations[index].name}, ${filteredLocations[index].country.name}",
+                    ),
                     onTap: () {
                       Navigator.pop(context, filteredLocations[index].name);
                     },
