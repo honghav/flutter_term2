@@ -1,26 +1,48 @@
-// import 'package:week_3_blabla_project/model/ride_pref/ride_pref.dart';
-
-import '../dummy_data/dummy_data.dart';
 import '../model/ride/ride.dart';
-import '../model/ride_pref/ride_pref.dart';
+import '../model/user/user.dart';
+import '../model/ride/locations.dart';
+import '../dummy_data/dummy_data.dart';
 
-////
-///   This service handles:
-///   - The list of available rides
-///
 class RidesService {
+  // Singleton pattern
+  static final RidesService _instance = RidesService._internal();
+  factory RidesService() => _instance;
+  RidesService._internal();
 
-  static List<Ride> availableRides = fakeRides;   // TODO for now fake data
-
-
-  ///
-  ///  Return the relevant rides, given the passenger preferences
-  ///
-  static List<Ride> getRidesFor(RidePref preferences) {
-    //  print(availableRides);
+  Future<List<Ride>> getAvailableRides() async {
+    // Simulate network delay
+    await Future.delayed(const Duration(seconds: 1));
     
-    // For now, just a test
-    return availableRides.where( (ride) => ride.departureLocation == preferences.departure && ride.arrivalLocation == preferences.arrival).toList();
+    // Use fakeRides from dummy_data.dart
+    return fakeRides.where((ride) => 
+      ride.status == RideStatus.published && 
+      ride.remainingSeats > 0
+    ).toList();
   }
- 
+
+  Future<List<Ride>> searchRides({
+    required Location departure,
+    required Location arrival,
+    required DateTime date,
+    required int seats
+  }) async {
+    // Simulate network delay
+    await Future.delayed(const Duration(seconds: 1));
+
+    return fakeRides.where((ride) =>
+      ride.status == RideStatus.published &&
+      ride.departureLocation == departure &&
+      ride.arrivalLocation == arrival &&
+      ride.departureDate.year == date.year &&
+      ride.departureDate.month == date.month &&
+      ride.departureDate.day == date.day &&
+      ride.remainingSeats >= seats
+    ).toList();
+  }
+
+  // Get rides created by a specific user
+  Future<List<Ride>> getUserRides(User driver) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return fakeRides.where((ride) => ride.driver == driver).toList();
+  }
 }

@@ -91,10 +91,46 @@ class _RidePrefFormState extends State<RidePrefForm> {
           arrival != null &&
           departureDate.isAfter(DateTime.now());
 
-  void _onSearch() {
-    if (isLoading || !isSearchEnabled) return; // Prevent duplicate calls
+  void _onSearch() async {
+    if (isLoading) return;
+    
+    // Check if departure is empty
+    if (departureController.text.isEmpty) {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LocationSearchScreen()),
+      );
+      
+      if (result != null) {
+        setState(() {
+          departureController.text = result;
+          departure = Location(name: result, country: Country.france);
+        });
+      }
+      return;
+    }
+    
+    // Check if arrival is empty
+    if (arrivalController.text.isEmpty) {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LocationSearchScreen()),
+      );
+      
+      if (result != null) {
+        setState(() {
+          arrivalController.text = result;
+          arrival = Location(name: result, country: Country.france);
+        });
+      }
+      return;
+    }
+    
+    // If all fields are set but criteria not complete
+    if (!isSearchEnabled) return;
+    
     setState(() => isLoading = true);
-
+  
     widget.onSearch?.call(
       RidePref(
         departure: departure!,
@@ -103,7 +139,7 @@ class _RidePrefFormState extends State<RidePrefForm> {
         requestedSeats: requestedSeats,
       ),
     );
-
+  
     Future.delayed(const Duration(seconds: 2), () {
       setState(() => isLoading = false);
     });
@@ -173,10 +209,16 @@ class _RidePrefFormState extends State<RidePrefForm> {
           ],
         ),
         const SizedBox(height: 20),
-        // CustomButton(
-        //   text: isLoading ? "Searching..." : "Search",
-        //   onPressed: isSearchEnabled && !isLoading ? _onSearch : null,
-        // ),
+        ElevatedButton(
+          onPressed: _onSearch,
+          child: Text(
+            departureController.text.isEmpty 
+              ? 'Select Departure' 
+              : (arrivalController.text.isEmpty 
+                  ? 'Select Arrival'
+                  : (isLoading ? 'Searching...' : 'Search'))
+          ),
+        ),
       ],
     );
   }
