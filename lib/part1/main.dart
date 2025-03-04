@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_ronanii/theme/theme.dart';
 
 import 'screens/ride_pref/ride_pref_screen.dart';
+import 'theme/theme.dart';
+
 // import 'lib/screens/ride_pref/ride_pref_screen.dart';
 // import 'lib/theme/theme.dart';
 

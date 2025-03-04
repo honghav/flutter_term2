@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_ronanii/dummy_data/dummy_data.dart';
+import '../../../dummy_data/dummy_data.dart';
 import 'new_widget.dart'; // Import the new widget
 import '../../../model/ride/locations.dart';
 import '../../../model/ride_pref/ride_pref.dart';
@@ -33,7 +33,6 @@ class _RidePrefFormState extends State<RidePrefForm> {
       arrival = widget.initRidePref!.arrival;
       departureDate = widget.initRidePref!.departureDate;
       requestedSeats = widget.initRidePref!.requestedSeats;
-
       departureController.text = departure?.name ?? '';
       arrivalController.text = arrival?.name ?? '';
       dateController.text = "${departureDate.toLocal()}".split(' ')[0];
@@ -126,23 +125,23 @@ class _RidePrefFormState extends State<RidePrefForm> {
       return;
     }
     
-    // If all fields are set but criteria not complete
-    if (!isSearchEnabled) return;
+    // // If all fields are set but criteria not complete
+    // if (!isSearchEnabled) return;
     
-    setState(() => isLoading = true);
+    // setState(() => isLoading = true);
   
-    widget.onSearch?.call(
-      RidePref(
-        departure: departure!,
-        arrival: arrival!,
-        departureDate: departureDate,
-        requestedSeats: requestedSeats,
-      ),
-    );
+    // widget.onSearch?.call(
+    //   RidePref(
+    //     departure: departure!,
+    //     arrival: arrival!,
+    //     departureDate: departureDate,
+    //     requestedSeats: requestedSeats,
+    //   ),
+    // );
   
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() => isLoading = false);
-    });
+    // Future.delayed(const Duration(seconds: 2), () {
+    //   setState(() => isLoading = false);
+    // });
   }
 
   @override
@@ -157,7 +156,6 @@ class _RidePrefFormState extends State<RidePrefForm> {
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.location_on),
             hintText: "Leaving from",
-            border: const OutlineInputBorder(),
             suffixIcon: IconButton(
               icon: const Icon(Icons.swap_vert),
               onPressed: _switchLocations,
@@ -172,7 +170,6 @@ class _RidePrefFormState extends State<RidePrefForm> {
           decoration: const InputDecoration(
             prefixIcon: Icon(Icons.location_on_outlined),
             hintText: "Going to",
-            border: OutlineInputBorder(),
           ),
           onTap: () => _openLocationSearch(arrivalController, false),
         ),
@@ -183,7 +180,6 @@ class _RidePrefFormState extends State<RidePrefForm> {
           decoration: const InputDecoration(
             prefixIcon: Icon(Icons.calendar_today),
             hintText: "Select Date",
-            border: OutlineInputBorder(),
           ),
           onTap: _selectDate,
         ),
@@ -211,6 +207,10 @@ class _RidePrefFormState extends State<RidePrefForm> {
         const SizedBox(height: 20),
         ElevatedButton(
           onPressed: _onSearch,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue, // Set button color to blue
+            foregroundColor: Colors.white, // Set text color to white for contrast
+          ),
           child: Text(
             departureController.text.isEmpty 
               ? 'Select Departure' 
