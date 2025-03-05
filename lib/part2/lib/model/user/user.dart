@@ -7,7 +7,7 @@ class User {
   final String email;
   final String phone;
   final String profilePicture;
-
+    final bool acceptsPets;  // Add this field to track pet acceptance
   final bool verifiedProfile;
 
   User(
@@ -16,5 +16,6 @@ class User {
       required this.email,
       required this.phone,
       required this.profilePicture,
-      required this.verifiedProfile});
+      required this.verifiedProfile,
+      this.acceptsPets= false});
 }
