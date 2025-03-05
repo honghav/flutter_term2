@@ -9,18 +9,22 @@ class RidePreference {
   final DateTime departureDate;
   final Location arrival;
   final int requestedSeats;
+  final int passengers;
 
   const RidePreference(
       {required this.departure,
       required this.departureDate,
       required this.arrival,
-      required this.requestedSeats});
+      required this.requestedSeats,
+      this.passengers = 1,
+      });
 
   @override
   String toString() {
     return 'RidePref(departure: ${departure.name}, '
         'departureDate: ${departureDate.toIso8601String()}, '
         'arrival: ${arrival.name}, '
-        'requestedSeats: $requestedSeats)';
+        'requestedSeats: $requestedSeats), '
+        'passengers: $passengers';
   }
 }
